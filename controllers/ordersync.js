@@ -15,11 +15,11 @@ const ShippingDetail = require('../models/ShippingDetail');
 const BillingDetail = require('../models/BillingDetail');
 
 const moveFile =function (oldPath, newPath) {
-	fs.rename(oldPath, newPath,async function (err) {
+	fs.rename(oldPath, newPath,function (err) {
 		    if (err) {
-				await mv(oldPath, newPath);
+				console.log(err, "--------------------error")
 			}
-		  })  
+	})  
 }
 
 //? Helper Function to Rename Keys
@@ -118,23 +118,7 @@ const renameToDesiredFormat = (data) => {
 	return result;
 };
 
-const UploadOrder=async function(oldPath, newPath ){
-  		console.log(oldPath, "--------oldPath")
-		let filext = path.extname(oldPath)
-		console.log(filext, "----------------------------extName")
-		if (filext ==='.xlsx'){
-			const wb = xlsx.readFile(oldPath,)
-			const ws = wb.Sheets['sample']
-			const jsonOrder = xlsx.utils.sheet_to_json(ws)
-			var orders = renameToDesiredFormat(jsonOrder);
-			console.log(orders, "---------------------------xlsx")
-		}else if (filext ==='.csv'){
-			const jsonOrders = await csv().fromFile(oldPath);
-			var orders = renameToDesiredFormat(jsonOrders);
-		}
-		else{
-			return 2;
-		}
+const UploadOrder=async function(orders,oldPath, newPath ){
 		const t =await sequelize.transaction();
 		try {
 			for (data of orders) {
@@ -257,11 +241,27 @@ const UploadOrder=async function(oldPath, newPath ){
 
 const Ordersync = (req, res) => {
 	// Read file inside Uplods dir 
-	 fs.readdir(uploads, (err, files) => {	   
-		files.forEach(file => {
-				const oldPath = (uploads+"/"+file)
-				const newPath = (uploaded+"/"+file)
-				const status = UploadOrder(oldPath, newPath)
+	 fs.readdir(uploads,(err, files) => {	   
+		files.forEach(async(file) => {
+			const oldPath = (uploads+"/"+file)
+			const newPath = (uploaded+"/"+file)
+			let filext = path.extname(oldPath)
+			if (filext ==='.csv'){
+				const jsonOrders =await csv().fromFile(oldPath);
+				var orders = renameToDesiredFormat(jsonOrders);
+				console.log(orders, "---------------------------csv")
+			}
+			else if (filext ==='.xlsx'){
+				const wb = xlsx.readFile(oldPath,)
+				const ws = wb.Sheets['sample']
+				const jsonOrder = xlsx.utils.sheet_to_json(ws)
+				var orders = renameToDesiredFormat(jsonOrder);
+				console.log(orders, "---------------------------xlsx")
+			}
+			else{
+				console.log("Wrong file format")	
+			}
+				const status = UploadOrder(orders,oldPath, newPath)
 				let date_ob1 = new Date();
 				// current hours
 				let hours1 = date_ob1.getHours();
@@ -283,7 +283,7 @@ const Ordersync = (req, res) => {
 					let seconds2 = date_ob2.getSeconds();
 		
 					if (data == 1){
-						console.log(file," Upload time = ",(hours2-hours1) + ":" + (minutes2-minutes1)+ ":" + (seconds2- seconds1))
+						console.log("-------------------------------------------------------------------------",file," Upload time = ",(hours2-hours1) + ":" + (minutes2-minutes1)+ ":" + (seconds2- seconds1))
 					}else{
 						console.log(data, "---something went wrong")
 						}
