@@ -16,11 +16,16 @@ const ShippingDetail = require('../models/ShippingDetail');
 const BillingDetail = require('../models/BillingDetail');
 
 const moveFile =function (oldPath, newPath) {
-	fs.rename(oldPath, newPath,function (err) {
+	try{
+		fs.rename(oldPath, newPath,function (err) {
 		    if (err) {
-				console.log(err, "--------------------error")
+				console.log(err, "----------error")
 			}
 	}) 
+	}catch (err){
+
+	}
+	
 }
 
 //? Helper Function to Rename Keys
@@ -247,23 +252,21 @@ const UploadOrder=function(file, oldPath, newPath ){
 						'orderId'
 					]);
 					const { id } = await Order.create(orderDetails, { transaction: t });
-					// paymentDetails.orderId = id
-					// shippingDetails.orderId = id
-					// billingDetails.orderId = id
-					// orderItemDetails.orderId = id
-					// await PaymentDetail.create(paymentDetails, { transaction: t });
-					// await BillingDetail.create(billingDetails, { transaction: t });
-					// await ShippingDetail.create(shippingDetails, { transaction: t });
-					// await ShippingDetail.create(shippingDetails, { transaction: t });
-					// await OrderItem.create(orderItemDetails, { transaction: t });
+					paymentDetails.orderId = id
+					shippingDetails.orderId = id
+					billingDetails.orderId = id
+					orderItemDetails.orderId = id
+					await PaymentDetail.create(paymentDetails, { transaction: t });
+					await BillingDetail.create(billingDetails, { transaction: t });
+					await ShippingDetail.create(shippingDetails, { transaction: t });
+					await ShippingDetail.create(shippingDetails, { transaction: t });
+					await OrderItem.create(orderItemDetails, { transaction: t });
 					console.log(id)
 					}	// End for 
 
 				t.commit();
-
-				
 				// //  Move file to uploded folder after successfully imported 
-				// moveFile(oldPath, newPath)
+				moveFile(oldPath, newPath)
 				
 				let date_ob2 = new Date();
 					// current hours
